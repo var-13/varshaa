@@ -1,0 +1,105 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+#define MAX_SIZE 100
+
+typedef struct Stack {
+    double items[MAX_SIZE];
+    int top;
+} Stack;
+
+// Function to create a stack
+Stack* createStack() {
+    Stack* stack = (Stack*)malloc(sizeof(Stack));
+    stack->top = -1;
+    return stack;
+}
+
+// Function to check if the stack is full
+int isFull(Stack* stack) {
+    return stack->top == MAX_SIZE - 1;
+}
+
+// Function to check if the stack is empty
+int isEmpty(Stack* stack) {
+    return stack->top == -1;
+}
+
+// Function to push an item onto the stack
+void push(Stack* stack, double item) {
+    if (isFull(stack)) {
+        printf("Stack is full!\n");
+        return;
+    }
+    stack->items[++stack->top] = item;
+}
+
+// Function to pop an item from the stack
+double pop(Stack* stack) {
+    if (isEmpty(stack)) {
+        printf("Stack is empty!\n");
+        return 0;
+    }
+    return stack->items[stack->top--];
+}
+
+// Function to perform arithmetic operations
+double performOperation(double a, double b, char operator) {
+    switch (operator) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/':
+            if (b != 0) return a / b;
+            else {
+                printf("Division by zero!\n");
+                return 0;
+            }
+        default:
+            printf("Invalid operator: %c\n", operator);
+            return 0;
+    }
+}
+
+// Function to evaluate an expression
+double evaluateExpression(const char* expression) {
+    Stack* stack = createStack();
+    // Create a mutable copy of the expression
+    char* exprCopy = strdup(expression);
+    char* token = strtok(exprCopy, " ");
+    
+    while (token != NULL) {
+        if (isdigit(token[0]) || (token[0] == '-' && isdigit(token[1]))) {
+            push(stack, atof(token));
+        } else {
+            double b = pop(stack);
+            double a = pop(stack);
+            double result = performOperation(a, b, token[0]);
+            push(stack, result);
+        }
+        token = strtok(NULL, " ");
+    }
+    
+    double finalResult = pop(stack);
+    free(exprCopy);  // Free the mutable copy
+    free(stack);
+    return finalResult;
+}
+
+int main() {
+    char expression[MAX_SIZE];
+    printf("Enter a postfix expression (e.g., '3 4 + 2 *'): ");
+    fgets(expression, sizeof(expression), stdin);
+
+    // Remove newline character from input
+    size_t len = strlen(expression);
+    if (len > 0 && expression[len - 1] == '\n') {
+        expression[len - 1] = '\0';
+    }
+
+    double result = evaluateExpression(expression);
+    printf("Result: %.2f\n", result);
+    return 0;
+}
